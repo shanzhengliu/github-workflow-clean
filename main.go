@@ -207,6 +207,7 @@ func main() {
 	deleteLevel = strings.TrimSpace(deleteLevel)
 	if deleteLevel != "workflow" && deleteLevel != "repo" {
 		fmt.Println("Please provide the correct delete level")
+		os.Exit(1)
 		return
 	}
 
@@ -214,10 +215,17 @@ func main() {
 	owner = strings.TrimSpace(owner)
 	repo = strings.TrimSpace(repo)
 
+	if deleteLevel != "repo" && deleteLevel != "workflow" {
+		fmt.Println("Please provide the correct delete level, it should be either workflow or repo")
+		os.Exit(1)
+		return
+	}
+
 	if deleteLevel == "workflow" {
 		workflowName = strings.TrimSpace(workflowName)
 		if token == "" || owner == "" || repo == "" || workflowName == "" {
 			fmt.Println("Please provide all the required inputs: token, owner, repo, workflowName")
+			os.Exit(1)
 			return
 		}
 	}
