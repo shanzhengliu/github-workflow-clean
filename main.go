@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"time"
 )
 
 type Workflow struct {
@@ -140,7 +141,7 @@ type DeleteResult struct {
 	RunID      int
 }
 
-func deleteWorkflowRun(token, owner, repo string, runs []WorkflowRun) {
+func deleteWorkflowRun(token, owner, repo string, runs []WorkflowRun) []DeleteResult {
 	var wg sync.WaitGroup
 	resultChan := make(chan DeleteResult, len(runs))
 
@@ -155,17 +156,18 @@ func deleteWorkflowRun(token, owner, repo string, runs []WorkflowRun) {
 
 	wg.Wait()
 	close(resultChan)
-
+	var needDelete []DeleteResult
 	for result := range resultChan {
+
 		if result.StatusCode == 204 {
 			fmt.Printf("Run ID: %d Deletion Status Code: %d\n", result.RunID, result.StatusCode)
 		} else {
+			needDelete = append(needDelete, result)
 			fmt.Printf("Failed to delete run with ID: %d\n", result.RunID)
 		}
 	}
 
-	fmt.Println("Done")
-	fmt.Println("note: if some workflow delete failed, please try again since the github api rate limit and unstable")
+	return needDelete
 }
 
 var (
@@ -235,8 +237,22 @@ func main() {
 	for _, workflow := range filteredWorkflows {
 		fmt.Printf("%+v\n", workflow)
 		workflowID := workflow.ID
-		runs := getWorkflowRuns(token, owner, repo, workflowID)
-		fmt.Println("numbers need to be deleted:", len(runs))
-		deleteWorkflowRun(token, owner, repo, runs)
+		retry := 0
+		for {
+			if retry > 3 {
+				break
+			}
+			runs := getWorkflowRuns(token, owner, repo, workflowID)
+			fmt.Println("numbers need to be deleted:", len(runs))
+			needReturn := deleteWorkflowRun(token, owner, repo, runs)
+			if len(needReturn) == 0 {
+				break
+			}
+			println("retrying to delete failed runs, sleep 1 minutes")
+			time.Sleep(60 * time.Second)
+			retry++
+		}
+
 	}
+	println("All runs deleted successfully")
 }
