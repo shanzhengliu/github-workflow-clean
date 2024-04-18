@@ -1,0 +1,22 @@
+# before use this service, 2 things you need to do:
+# 1: you need to create a personal access token in github
+# 2: you need to disable the workflow you want to delete in github
+
+services:
+  delete-github-workflow:
+    image: samliu960522/github-workflow-clean:latest
+    environment:
+      # GITHUB_DELETE_LEVEL can be one of 'repo', 'workflow'
+      - GITHUB_DELETE_LEVEL=repo
+
+      # GITHUB_TOKEN is required，go to github and login， click right top profile image -> settings -> developer settings -> personal access tokens -> tokens -> generate new token -> copy the token
+      - GITHUB_TOKEN=xxxx_xxxxxxxxxxxxxx
+
+      # GITHUB_OWNER and GITHUB_REPO are required, owner is a part of your github repo url eg: https://www.github.com/{owner}/{repo}, {owner} is the owner
+      - GITHUB_OWNER={replace it with owner name}
+
+      # GITHUB_REPO is required, repo is a part of your github repo url eg: https://www.github.com/{owner}/{repo}, {repo} is the repo
+      - GITHUB_REPO={replace it with repo name
+
+      # GITHUB_WORKFLOW_NAME is optional if GITHUB_DELETE_LEVEL is repo, but when you need to use workflow, you need to specify the workflow name, you can find it on the github action page, on the left sidebar
+      - GITHUB_WORKFLOW_NAME=
